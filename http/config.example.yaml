@@ -1,0 +1,88 @@
+# HTTP server bind address to serve Proksi
+bind: "0.0.0.0:9090"
+
+# Config of exposing Prometheus metrics
+metrics:
+  enabled: true
+  bind: "0.0.0.0:9001"
+
+# Storage backend type: "elasticsearch" or "stdout"
+# Use "stdout" to output JSON logs directly to stdout instead of Elasticsearch
+storage_type: "stdout"
+
+# List of upstreams to proxy the request to them
+upstreams:
+  # main is the upstream that we are sure about its behavior and its response will be the criterion. The response of the
+  # request will be the main upstream response
+  main:
+    address: "http://localhost:8080"
+  # test is the upstream that we want to test its behavior. Its response will be compared to the main upstream response
+  test:
+    address: "http://localhost:8081"
+
+# Worker pool configurations
+worker:
+  count: 50               # Number of go-routines of the pool
+  queue_size: 2048        # Size of the queue (buffered channel size)
+
+# Elasticsearch storage config params
+elasticsearch:
+  addresses: [ "127.0.0.1:9200"]  # A list of Elasticsearch nodes to use.
+  username: ""                    # Username for HTTP Basic Authentication.
+  password: ""                    # Password for HTTP Basic Authentication.
+  cloud_id: ""                    # Endpoint for the Elastic Service (https://elastic.co/cloud).
+  api_key: ""                     # Base64-encoded token for authorization; if set, overrides username/password and service token.
+  service_token: ""               # Service token for authorization; if set, overrides username/password.
+  certificate_fingerprint: ""     # SHA256 hex fingerprint given by Elasticsearch on first launch.
+
+# List of json path to be skipped on response comparison
+skip_json_paths: []
+
+# An integer number between 0 and 100 shows how often the incoming request should be sent to the test upstream for compare.
+# Be aware that this option won't affect the number of requests sending to the main upstream.
+# 100 indicates that all the requests will be sent to the test upstream too.
+# 0 indicates that none of the requests will be sent to the test upstream.
+# 43 indicates that 43% of the requests will be sent to the test upstream.
+test_probability: 100
+
+# Indicates whether to log response body of main and test upstreams or not.
+log_response_payload: true
+
+# Indicates whether to compare response headers between main and test upstreams or not.
+compare_headers: true
+
+# Global configuration that applies to all routes (unless overridden)
+global_config:
+  compare_headers: true                    # Compare response headers by default
+  skip_headers: ["Date", "Server"]         # Headers to ignore during comparison
+  store_req_body: false                    # Store request body when responses differ
+  store_resp_bodies: true                  # Store response bodies when they differ
+  skip_json_paths: []                      # JSON paths to ignore during comparison
+  test_probability: 100                    # Percentage of requests to send to test upstream
+
+# Routes to completely skip (no test upstream call or comparison)
+skip_routes:
+  - "GET:/health"                          # Skip health checks
+  - "*:/metrics"                           # Skip metrics endpoints
+
+# Per-route configuration overrides
+route_configs:
+  "POST:/api/v1/cities":                   # Exact route match
+    compare_headers: false                 # Disable header comparison for this route
+    store_req_body: true                   # Store request body for debugging
+    skip_headers: ["X-Request-ID"]         # Additional headers to skip
+
+  "GET:/api/v1/users/*":                   # Wildcard path matching
+    skip_headers: ["Authorization", "Cookie"] # Skip sensitive headers
+    test_probability: 50                   # Only test 50% of user requests
+    skip_json_paths: ["timestamp", "user.last_login"]
+
+  "*:/api/v2/*":                           # Method wildcard with path pattern
+    store_req_body: true                   # Store all v2 API request bodies
+    store_resp_bodies: false               # But don't store response bodies
+
+# Example of different patterns:
+# - "GET:/exact/path" - exact match for GET /exact/path
+# - "POST:/api/v1/*" - match POST requests to any path under /api/v1/
+# - "*:/health" - match any method to /health
+# - "GET:/users/[0-9]*" - match GET requests to /users/123 etc (Go path.Match syntax)
