@@ -26,7 +26,8 @@ var (
 )
 
 var defaultHTTP = HTTPConfig{
-	Bind: "0.0.0.0:9090",
+	Bind:     "0.0.0.0:9090",
+	LogLevel: "warn",
 	Metrics: metric{
 		Enabled: true,
 		Bind:    "0.0.0.0:9001",
@@ -75,6 +76,7 @@ var defaultHTTP = HTTPConfig{
 // HTTPConfig represent config of the Proksi HTTP.
 type HTTPConfig struct {
 	Bind          string        `koanf:"bind"`
+	LogLevel      string        `koanf:"log_level"` // Log level: "debug", "info", "warn", "error", "fatal"
 	Metrics       metric        `koanf:"metrics"`
 	StorageType   string        `koanf:"storage_type"` // Storage backend type: "elasticsearch" or "stdout"
 	Elasticsearch Elasticsearch `koanf:"elasticsearch"`
@@ -139,10 +141,10 @@ type ComputedRouteConfig struct {
 type ComputedRouteConfigs struct {
 	// Pre-computed route configs: "GET:/api/users" -> merged config
 	Routes map[string]ComputedRouteConfig
-	
+
 	// Pre-computed global config (with legacy migration applied)
 	Global ComputedRouteConfig
-	
+
 	// Skip routes for fast lookup: "GET:/health" -> true
 	SkipRoutes map[string]bool
 }
@@ -151,7 +153,7 @@ type ComputedRouteConfigs struct {
 func LoadHTTP(path string) *HTTPConfig {
 	// Create a fresh koanf instance for each load to avoid state pollution
 	localK := koanf.New(".")
-	
+
 	// LoadHTTP default config in the beginning
 	err := localK.Load(structs.Provider(defaultHTTP, "koanf"), nil)
 	if err != nil {
@@ -187,7 +189,7 @@ func LoadHTTP(path string) *HTTPConfig {
 func (c *HTTPConfig) migrateFromLegacyConfig() {
 	// Migration strategy: Only migrate legacy fields if they differ from the default values
 	// AND the global config appears to be using defaults (not explicitly configured)
-	
+
 	// Check if global config seems to be explicitly configured by seeing if it differs from defaults
 	defaultGlobal := defaultHTTP.GlobalConfig
 	globalConfigIsDefault := (c.GlobalConfig.CompareHeaders == defaultGlobal.CompareHeaders &&
@@ -330,7 +332,7 @@ func matchSegmentWildcards(requestPath, configPath string) bool {
 				break
 			}
 		}
-		
+
 		if !hasOtherWildcards {
 			// This is a true trailing wildcard with no other wildcards
 			prefix := strings.TrimSuffix(configPath, "/*")
@@ -368,7 +370,6 @@ func matchSegmentWildcards(requestPath, configPath string) bool {
 
 	return true
 }
-
 
 // PrecomputeRouteConfigs creates pre-computed route configurations for fast runtime lookup
 func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
@@ -411,21 +412,21 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 			mergedConfig.CompareHeaders = false
 		}
 		// Empty string means inherit from global (no override needed)
-		
+
 		if routeConfig.StoreReqBody == "enable" {
 			mergedConfig.StoreReqBody = true
 		} else if routeConfig.StoreReqBody == "disable" {
 			mergedConfig.StoreReqBody = false
 		}
 		// Empty string means inherit from global (no override needed)
-		
+
 		if routeConfig.StoreRespBodies == "enable" {
 			mergedConfig.StoreRespBodies = true
 		} else if routeConfig.StoreRespBodies == "disable" {
 			mergedConfig.StoreRespBodies = false
 		}
 		// Empty string means inherit from global (no override needed)
-		
+
 		if len(routeConfig.SkipHeaders) > 0 {
 			mergedConfig.SkipHeaders = append(mergedConfig.SkipHeaders, routeConfig.SkipHeaders...)
 		}
@@ -449,7 +450,7 @@ func GetRouteConfig(route string) ComputedRouteConfig {
 	if config, exists := ComputedConfigs.Routes[route]; exists {
 		return config
 	}
-	
+
 	// Return global config if no specific route config found
 	return ComputedConfigs.Global
 }

@@ -9,6 +9,10 @@ data:
     # HTTP server bind address to serve Proksi
     bind: ":{{ .Values.service.containerPort }}"
 
+    # Log level for application logging
+    # Options: debug, info, warn, error, fatal
+    log_level: {{ .Values.logLevel | quote }}
+
     # Config of exposing Prometheus metrics
     metrics:
       enabled: {{ .Values.metrics.enabled }}

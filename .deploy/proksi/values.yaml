@@ -83,6 +83,10 @@ tolerations: []
 affinity: {}
 
 # Configs
+# Log level for application logging
+# Options: debug, info, warn, error, fatal
+logLevel: "warn"
+
 # Storage backend type: "elasticsearch" or "stdout"
 # Use "stdout" to output JSON logs directly to stdout instead of Elasticsearch
 storageType: "stdout"

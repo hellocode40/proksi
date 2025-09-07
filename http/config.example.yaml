@@ -1,6 +1,10 @@
 # HTTP server bind address to serve Proksi
 bind: "0.0.0.0:9090"
 
+# Log level for application logging
+# Options: debug, info, warn, error, fatal
+log_level: "info"
+
 # Config of exposing Prometheus metrics
 metrics:
   enabled: true

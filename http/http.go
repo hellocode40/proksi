@@ -56,6 +56,13 @@ func main() {
 
 	c := config.LoadHTTP(configPath)
 
+	// Initialize logging with configured level
+	if err := logging.InitializeLogger(c.LogLevel); err != nil {
+		logging.L.Fatal("Failed to initialize logger", zap.Error(err))
+	}
+
+	logging.L.Info("Logger initialized", zap.String("log_level", c.LogLevel))
+
 	if c.Upstreams.Main.Address == "" {
 		logging.L.Fatal("Main upstream backend can not be empty.")
 	}
