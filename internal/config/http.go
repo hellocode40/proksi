@@ -388,6 +388,8 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 		TestProbability: c.GlobalConfig.TestProbability,
 	}
 
+	logging.L.Info("global config", zap.Any("config", computed.Global))
+
 	// Pre-compute skip routes for fast lookup
 	for _, skipRoute := range c.SkipRoutes {
 		computed.SkipRoutes[skipRoute] = true
@@ -439,6 +441,8 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 
 		// Store the pre-computed config
 		computed.Routes[routePattern] = mergedConfig
+
+		logging.L.Info("route_config", zap.String("pattern", routePattern), zap.Any("config", mergedConfig))
 	}
 
 	return computed
@@ -446,9 +450,16 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 
 // GetRouteConfig returns pre-computed route configuration for runtime lookup
 func GetRouteConfig(route string) ComputedRouteConfig {
-	// Check if route exists in pre-computed configs
+	// Check for exact match first (for performance)
 	if config, exists := ComputedConfigs.Routes[route]; exists {
 		return config
+	}
+
+	// Check for pattern matches using MatchRoute
+	for configRoute, config := range ComputedConfigs.Routes {
+		if MatchRoute(route, configRoute) {
+			return config
+		}
 	}
 
 	// Return global config if no specific route config found
@@ -457,5 +468,17 @@ func GetRouteConfig(route string) ComputedRouteConfig {
 
 // IsRouteSkipped checks if a route should be skipped using pre-computed lookup
 func IsRouteSkipped(route string) bool {
-	return ComputedConfigs.SkipRoutes[route]
+	// Check for exact match first (for performance)
+	if ComputedConfigs.SkipRoutes[route] {
+		return true
+	}
+
+	// Check for pattern matches using MatchRoute
+	for skipRoute := range ComputedConfigs.SkipRoutes {
+		if MatchRoute(route, skipRoute) {
+			return true
+		}
+	}
+
+	return false
 }

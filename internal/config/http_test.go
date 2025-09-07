@@ -95,9 +95,9 @@ route_configs:
 			expectedConfig: HTTPConfig{
 				RouteConfigs: map[string]RouteConfig{
 					"POST:/api/users": {
-						CompareHeaders:  "enable",  // Explicitly set to enable
+						CompareHeaders:  "enable", // Explicitly set to enable
 						SkipHeaders:     []string{"X-Request-ID"},
-						StoreReqBody:    "",       // Not specified, gets "" (inherit)
+						StoreReqBody:    "",        // Not specified, gets "" (inherit)
 						StoreRespBodies: "disable", // Explicitly set to disable
 						TestProbability: 50,
 					},
@@ -135,30 +135,30 @@ route_configs:
 
 				// Test CompareHeaders string
 				if actualRouteConfig.CompareHeaders != expectedRouteConfig.CompareHeaders {
-					t.Errorf("CompareHeaders: expected %q, got %q", 
+					t.Errorf("CompareHeaders: expected %q, got %q",
 						expectedRouteConfig.CompareHeaders, actualRouteConfig.CompareHeaders)
 				}
 
 				// Test StoreReqBody string
 				if actualRouteConfig.StoreReqBody != expectedRouteConfig.StoreReqBody {
-					t.Errorf("StoreReqBody: expected %q, got %q", 
+					t.Errorf("StoreReqBody: expected %q, got %q",
 						expectedRouteConfig.StoreReqBody, actualRouteConfig.StoreReqBody)
 				}
 
 				// Test StoreRespBodies string
 				if actualRouteConfig.StoreRespBodies != expectedRouteConfig.StoreRespBodies {
-					t.Errorf("StoreRespBodies: expected %q, got %q", 
+					t.Errorf("StoreRespBodies: expected %q, got %q",
 						expectedRouteConfig.StoreRespBodies, actualRouteConfig.StoreRespBodies)
 				}
 
 				// Test non-pointer fields
 				if !reflect.DeepEqual(actualRouteConfig.SkipHeaders, expectedRouteConfig.SkipHeaders) {
-					t.Errorf("SkipHeaders: expected %v, got %v", 
+					t.Errorf("SkipHeaders: expected %v, got %v",
 						expectedRouteConfig.SkipHeaders, actualRouteConfig.SkipHeaders)
 				}
-				
+
 				if actualRouteConfig.TestProbability != expectedRouteConfig.TestProbability {
-					t.Errorf("TestProbability: expected %v, got %v", 
+					t.Errorf("TestProbability: expected %v, got %v",
 						expectedRouteConfig.TestProbability, actualRouteConfig.TestProbability)
 				}
 			}
@@ -378,15 +378,15 @@ route_configs:
 
 				// Check string fields
 				if actualRouteConfig.CompareHeaders != expectedRouteConfig.CompareHeaders {
-					t.Errorf("%s CompareHeaders: expected %q, got %q", 
+					t.Errorf("%s CompareHeaders: expected %q, got %q",
 						routePattern, expectedRouteConfig.CompareHeaders, actualRouteConfig.CompareHeaders)
 				}
 				if actualRouteConfig.StoreReqBody != expectedRouteConfig.StoreReqBody {
-					t.Errorf("%s StoreReqBody: expected %q, got %q", 
+					t.Errorf("%s StoreReqBody: expected %q, got %q",
 						routePattern, expectedRouteConfig.StoreReqBody, actualRouteConfig.StoreReqBody)
 				}
 				if actualRouteConfig.StoreRespBodies != expectedRouteConfig.StoreRespBodies {
-					t.Errorf("%s StoreRespBodies: expected %q, got %q", 
+					t.Errorf("%s StoreRespBodies: expected %q, got %q",
 						routePattern, expectedRouteConfig.StoreRespBodies, actualRouteConfig.StoreRespBodies)
 				}
 
@@ -454,7 +454,7 @@ func TestParseRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			method, path := ParseRoute(tt.route)
 			if method != tt.expectedMethod || path != tt.expectedPath {
-				t.Errorf("ParseRoute(%q) = (%q, %q), want (%q, %q)", 
+				t.Errorf("ParseRoute(%q) = (%q, %q), want (%q, %q)",
 					tt.route, method, path, tt.expectedMethod, tt.expectedPath)
 			}
 		})
@@ -472,42 +472,42 @@ func TestMatchRoute(t *testing.T) {
 		{"Exact match", "GET:/api/users", "GET:/api/users", true},
 		{"Method mismatch", "POST:/api/users", "GET:/api/users", false},
 		{"Path mismatch", "GET:/api/orders", "GET:/api/users", false},
-		
+
 		// Method wildcards
 		{"Method wildcard match", "GET:/health", "*:/health", true},
 		{"Method wildcard different methods", "POST:/health", "*:/health", true},
-		
+
 		// Trailing wildcards
 		{"Trailing wildcard match", "GET:/api/users/123", "GET:/api/users/*", true},
 		{"Trailing wildcard deep match", "GET:/api/users/123/profile/settings", "GET:/api/users/*", true},
 		{"Trailing wildcard no match", "GET:/api/orders", "GET:/api/users/*", false},
-		
+
 		// Single segment parameters
 		{"Single parameter match", "GET:/api/users/123/profile", "GET:/api/users/*/profile", true},
 		{"Single parameter string", "GET:/api/users/abc/profile", "GET:/api/users/*/profile", true},
 		{"Single parameter mismatch - missing segment", "GET:/api/users/profile", "GET:/api/users/*/profile", false},
 		{"Single parameter mismatch - extra segment", "GET:/api/users/123/456/profile", "GET:/api/users/*/profile", false},
-		
+
 		// Multiple parameters
 		{"Multiple parameters", "GET:/api/users/123/posts/456", "GET:/api/users/*/posts/*", true},
 		{"Multiple parameters strings", "GET:/api/users/abc/posts/def", "GET:/api/users/*/posts/*", true},
 		{"Multiple parameters missing last", "GET:/api/users/123/posts", "GET:/api/users/*/posts/*", false},
 		{"Multiple parameters extra segments", "GET:/api/users/123/posts/456/comments", "GET:/api/users/*/posts/*", false},
-		
+
 		// Mixed patterns
 		{"Mixed wildcards with fixed segments", "GET:/api/public/v1/users", "GET:/api/*/v1/users", true},
 		{"Mixed wildcards mismatch", "GET:/api/public/v2/users", "GET:/api/*/v1/users", false},
-		
+
 		// Root level parameters
 		{"Root parameter", "GET:/anything", "GET:/*", true},
 		{"Two root parameters", "GET:/api/users", "GET:/*/*", true},
 		{"Two root parameters mismatch", "GET:/api", "GET:/*/*", false},
-		
+
 		// Edge cases
 		{"Empty paths", "GET:", "GET:", true},
 		{"Single wildcard", "GET:/test", "GET:*", true}, // Actually matches via Go path.Match
 		{"Root wildcard match", "GET:/", "GET:/*", true},
-		
+
 		// Go path.Match fallback patterns
 		{"Character class match", "GET:/users/123", "GET:/users/[0-9]*", false}, // Our implementation doesn't use path.Match for patterns with *
 		{"Character class no match", "GET:/users/abc", "GET:/users/[0-9]*", false},
@@ -517,7 +517,7 @@ func TestMatchRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := MatchRoute(tt.requestRoute, tt.configRoute)
 			if result != tt.expected {
-				t.Errorf("MatchRoute(%q, %q) = %t, want %t", 
+				t.Errorf("MatchRoute(%q, %q) = %t, want %t",
 					tt.requestRoute, tt.configRoute, result, tt.expected)
 			}
 		})
@@ -534,24 +534,24 @@ func TestMatchPath(t *testing.T) {
 		// Exact matches
 		{"Exact match", "/api/users", "/api/users", true},
 		{"Exact mismatch", "/api/users", "/api/orders", false},
-		
+
 		// No wildcards (Go path.Match)
 		{"No wildcard exact", "/users/123", "/users/123", true},
 		{"Character class", "/users/123", "/users/[0-9]*", false}, // Our implementation routes * patterns to segment matching
 		{"Character class no match", "/users/abc", "/users/[0-9]*", false},
-		
+
 		// Single segment wildcards
 		{"Single segment wildcard", "/api/users/123/profile", "/api/users/*/profile", true},
 		{"Single segment wildcard mismatch segments", "/api/users/profile", "/api/users/*/profile", false},
-		
+
 		// Multiple segment wildcards
 		{"Multiple segments", "/api/users/123/posts/456", "/api/users/*/posts/*", true},
 		{"Multiple segments root", "/api/users", "/*/*", true},
-		
+
 		// Trailing wildcards vs segment wildcards
 		{"True trailing wildcard", "/api/users/123/anything/else", "/api/users/*", true},
 		{"Segment wildcard not trailing", "/api/users/123", "/api/users/*", true}, // This is ambiguous in current implementation
-		
+
 		// Edge cases
 		{"Empty request path", "", "", true},
 		{"Root paths", "/", "/", true},
@@ -562,7 +562,7 @@ func TestMatchPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := matchPath(tt.requestPath, tt.configPath)
 			if result != tt.expected {
-				t.Errorf("matchPath(%q, %q) = %t, want %t", 
+				t.Errorf("matchPath(%q, %q) = %t, want %t",
 					tt.requestPath, tt.configPath, result, tt.expected)
 			}
 		})
@@ -580,18 +580,18 @@ func TestMatchSegmentWildcards(t *testing.T) {
 		{"Pure trailing wildcard", "/api/users/123/anything", "/api/users/*", true},
 		{"Pure trailing wildcard no match", "/api/orders/123", "/api/users/*", false},
 		{"Root trailing wildcard", "/anything/here", "/*", true},
-		
+
 		// Segment-by-segment matching (patterns with other wildcards)
 		{"Mixed pattern not trailing", "/api/test/v1/users", "/api/*/v1/*", true},
 		{"Multiple parameters", "/api/users/123/posts/456", "/api/users/*/posts/*", true},
 		{"Root segments", "/api/users", "/*/*", true},
 		{"Root segments mismatch count", "/api", "/*/*", false},
-		
+
 		// Edge cases
 		{"Empty paths", "", "", true},
 		{"Single segment match", "/test", "/*", true},
 		{"Single parameter", "/api", "/*", true},
-		
+
 		// Segment count validation
 		{"Too few segments", "/api", "/api/*/test", false},
 		{"Too many segments", "/api/test/extra/stuff", "/api/*/test", false},
@@ -602,7 +602,7 @@ func TestMatchSegmentWildcards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := matchSegmentWildcards(tt.requestPath, tt.configPath)
 			if result != tt.expected {
-				t.Errorf("matchSegmentWildcards(%q, %q) = %t, want %t", 
+				t.Errorf("matchSegmentWildcards(%q, %q) = %t, want %t",
 					tt.requestPath, tt.configPath, result, tt.expected)
 			}
 		})
@@ -624,14 +624,14 @@ func TestIsValidRoutePattern(t *testing.T) {
 		{"Single wildcard", "*", true},
 		{"Root parameter", "/*", true},
 		{"Multiple root parameters", "/*/*", true},
-		
+
 		// Invalid patterns
 		{"Empty path", "", false},
 		{"No leading slash", "api/users", false},
 		{"Double wildcards", "/api/**/users", false},
 		{"Invalid trailing wildcard", "/api/users*", false},
 		{"Invalid trailing pattern", "/api/test*", false},
-		
+
 		// Edge cases
 		{"Just slash and wildcard", "/*", true},
 		{"Multiple slashes", "/api//users", true}, // This might be debatable
@@ -661,25 +661,25 @@ func TestHTTPConfig_migrateFromLegacyConfig(t *testing.T) {
 				LogResponsePayload: false,
 				SkipJSONPaths:      []string{"timestamp", "id"},
 				GlobalConfig: GlobalConfig{
-					CompareHeaders:  true,  // Should be overridden
-					TestProbability: 100,   // Should be overridden
-					StoreRespBodies: true,  // Should be overridden
+					CompareHeaders:  true,       // Should be overridden
+					TestProbability: 100,        // Should be overridden
+					StoreRespBodies: true,       // Should be overridden
 					SkipJSONPaths:   []string{}, // Should be overridden
 				},
 			},
 			expectedGlobal: GlobalConfig{
-				CompareHeaders:  false, // From legacy
-				TestProbability: 75,    // From legacy
-				StoreRespBodies: false, // From legacy LogResponsePayload
+				CompareHeaders:  false,                       // From legacy
+				TestProbability: 75,                          // From legacy
+				StoreRespBodies: false,                       // From legacy LogResponsePayload
 				SkipJSONPaths:   []string{"timestamp", "id"}, // From legacy
 			},
 		},
 		{
 			name: "No migration when legacy fields match defaults",
 			config: HTTPConfig{
-				CompareHeaders:     true,  // Matches global default
-				TestProbability:    0,     // Zero value, no migration
-				LogResponsePayload: true,  // Matches global default
+				CompareHeaders:     true,       // Matches global default
+				TestProbability:    0,          // Zero value, no migration
+				LogResponsePayload: true,       // Matches global default
 				SkipJSONPaths:      []string{}, // Empty, no migration
 				GlobalConfig: GlobalConfig{
 					CompareHeaders:  true,
@@ -689,18 +689,18 @@ func TestHTTPConfig_migrateFromLegacyConfig(t *testing.T) {
 				},
 			},
 			expectedGlobal: GlobalConfig{
-				CompareHeaders:  true, // No change
-				TestProbability: 100,  // No change  
-				StoreRespBodies: true, // No change
+				CompareHeaders:  true,       // No change
+				TestProbability: 100,        // No change
+				StoreRespBodies: true,       // No change
 				SkipJSONPaths:   []string{}, // No change
 			},
 		},
 		{
 			name: "Partial migration",
 			config: HTTPConfig{
-				CompareHeaders:     false, // Different from global, should migrate
-				TestProbability:    50,    // Non-zero, different from global, should migrate
-				LogResponsePayload: true,  // Same as global StoreRespBodies, no migration
+				CompareHeaders:     false,            // Different from global, should migrate
+				TestProbability:    50,               // Non-zero, different from global, should migrate
+				LogResponsePayload: true,             // Same as global StoreRespBodies, no migration
 				SkipJSONPaths:      []string{"test"}, // Non-empty, global empty, should migrate
 				GlobalConfig: GlobalConfig{
 					CompareHeaders:  true,
@@ -710,9 +710,9 @@ func TestHTTPConfig_migrateFromLegacyConfig(t *testing.T) {
 				},
 			},
 			expectedGlobal: GlobalConfig{
-				CompareHeaders:  false, // Migrated
-				TestProbability: 50,    // Migrated
-				StoreRespBodies: true,  // No migration (same value)
+				CompareHeaders:  false,            // Migrated
+				TestProbability: 50,               // Migrated
+				StoreRespBodies: true,             // No migration (same value)
 				SkipJSONPaths:   []string{"test"}, // Migrated
 			},
 		},
@@ -721,21 +721,21 @@ func TestHTTPConfig_migrateFromLegacyConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.config.migrateFromLegacyConfig()
-			
+
 			if tt.config.GlobalConfig.CompareHeaders != tt.expectedGlobal.CompareHeaders {
-				t.Errorf("CompareHeaders = %t, want %t", 
+				t.Errorf("CompareHeaders = %t, want %t",
 					tt.config.GlobalConfig.CompareHeaders, tt.expectedGlobal.CompareHeaders)
 			}
 			if tt.config.GlobalConfig.TestProbability != tt.expectedGlobal.TestProbability {
-				t.Errorf("TestProbability = %d, want %d", 
+				t.Errorf("TestProbability = %d, want %d",
 					tt.config.GlobalConfig.TestProbability, tt.expectedGlobal.TestProbability)
 			}
 			if tt.config.GlobalConfig.StoreRespBodies != tt.expectedGlobal.StoreRespBodies {
-				t.Errorf("StoreRespBodies = %t, want %t", 
+				t.Errorf("StoreRespBodies = %t, want %t",
 					tt.config.GlobalConfig.StoreRespBodies, tt.expectedGlobal.StoreRespBodies)
 			}
 			if !reflect.DeepEqual(tt.config.GlobalConfig.SkipJSONPaths, tt.expectedGlobal.SkipJSONPaths) {
-				t.Errorf("SkipJSONPaths = %v, want %v", 
+				t.Errorf("SkipJSONPaths = %v, want %v",
 					tt.config.GlobalConfig.SkipJSONPaths, tt.expectedGlobal.SkipJSONPaths)
 			}
 		})
@@ -804,12 +804,12 @@ func TestHTTPConfig_PrecomputeRouteConfigs(t *testing.T) {
 	// Test route-specific configs
 	// POST:/api/users should override all fields
 	expectedPostUsers := ComputedRouteConfig{
-		CompareHeaders:  false, // Overridden
+		CompareHeaders:  false,                                       // Overridden
 		SkipHeaders:     []string{"Date", "Server", "Authorization"}, // Merged
-		StoreReqBody:    true,  // Overridden
-		StoreRespBodies: true,  // Overridden
-		SkipJSONPaths:   []string{"timestamp", "password"}, // Merged
-		TestProbability: 75,    // Overridden
+		StoreReqBody:    true,                                        // Overridden
+		StoreRespBodies: true,                                        // Overridden
+		SkipJSONPaths:   []string{"timestamp", "password"},           // Merged
+		TestProbability: 75,                                          // Overridden
 	}
 
 	if gotConfig, exists := computed.Routes["POST:/api/users"]; !exists {
@@ -822,12 +822,12 @@ func TestHTTPConfig_PrecomputeRouteConfigs(t *testing.T) {
 
 	// GET:/api/orders/* should inherit some fields and override others
 	expectedGetOrders := ComputedRouteConfig{
-		CompareHeaders:  true, // From global (inherited via nil pointer)
+		CompareHeaders:  true,                                 // From global (inherited via nil pointer)
 		SkipHeaders:     []string{"Date", "Server", "Cookie"}, // Merged
-		StoreReqBody:    false, // From global (inherited via nil pointer)
-		StoreRespBodies: true,  // From global (inherited via nil pointer)
+		StoreReqBody:    false,                                // From global (inherited via nil pointer)
+		StoreRespBodies: true,                                 // From global (inherited via nil pointer)
 		SkipJSONPaths:   []string{"timestamp", "internal_id"}, // Merged
-		TestProbability: 50,    // Overridden
+		TestProbability: 50,                                   // Overridden
 	}
 
 	if gotConfig, exists := computed.Routes["GET:/api/orders/*"]; !exists {
@@ -856,6 +856,13 @@ func TestGetRouteConfig(t *testing.T) {
 				StoreReqBody:    true,
 				StoreRespBodies: true,
 				TestProbability: 75,
+			},
+			"POST:/api/v1/services/*/items": {
+				CompareHeaders:  true,
+				SkipHeaders:     []string{"X-Service"},
+				StoreReqBody:    false,
+				StoreRespBodies: false,
+				TestProbability: 50,
 			},
 		},
 		SkipRoutes: map[string]bool{
@@ -890,6 +897,28 @@ func TestGetRouteConfig(t *testing.T) {
 				TestProbability: 100,
 			},
 		},
+		{
+			name:  "Route parameter matching",
+			route: "POST:/api/v1/services/payment/items",
+			expected: ComputedRouteConfig{
+				CompareHeaders:  true,
+				SkipHeaders:     []string{"X-Service"},
+				StoreReqBody:    false,
+				StoreRespBodies: false,
+				TestProbability: 50,
+			},
+		},
+		{
+			name:  "Route parameter matching - different service",
+			route: "POST:/api/v1/services/billing/items",
+			expected: ComputedRouteConfig{
+				CompareHeaders:  true,
+				SkipHeaders:     []string{"X-Service"},
+				StoreReqBody:    false,
+				StoreRespBodies: false,
+				TestProbability: 50,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -906,9 +935,9 @@ func TestIsRouteSkipped(t *testing.T) {
 	// Set up ComputedConfigs for testing
 	ComputedConfigs = &ComputedRouteConfigs{
 		SkipRoutes: map[string]bool{
-			"GET:/health":  true,
-			"*:/metrics":   true,
-			"POST:/debug":  true,
+			"GET:/health": true,
+			"*:/metrics":  true,
+			"POST:/debug": true,
 		},
 	}
 
@@ -918,7 +947,9 @@ func TestIsRouteSkipped(t *testing.T) {
 		expected bool
 	}{
 		{"Skipped route", "GET:/health", true},
-		{"Skipped with wildcard method", "*:/metrics", true},
+		{"Skipped with wildcard method - exact match", "*:/metrics", true},
+		{"Skipped with wildcard method - pattern match GET", "GET:/metrics", true},
+		{"Skipped with wildcard method - pattern match POST", "POST:/metrics", true},
 		{"Another skipped route", "POST:/debug", true},
 		{"Non-skipped route", "GET:/api/users", false},
 		{"Non-existing route", "DELETE:/api/orders", false},
@@ -989,16 +1020,16 @@ func BenchmarkIsRouteSkipped(b *testing.B) {
 	// Set up realistic ComputedConfigs
 	ComputedConfigs = &ComputedRouteConfigs{
 		SkipRoutes: map[string]bool{
-			"GET:/health":     true,
-			"GET:/metrics":    true,
-			"*:/static/*":     true,
-			"OPTIONS:/api/*":  true,
+			"GET:/health":    true,
+			"GET:/metrics":   true,
+			"*:/static/*":    true,
+			"OPTIONS:/api/*": true,
 		},
 	}
 
 	routes := []string{
 		"GET:/health",
-		"GET:/metrics", 
+		"GET:/metrics",
 		"*:/static/css",
 		"OPTIONS:/api/users",
 		"POST:/api/users",
