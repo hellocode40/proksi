@@ -162,7 +162,7 @@ func (s *server) handle(writer http.ResponseWriter, req *http.Request) {
 
 	// Check if route should be skipped entirely
 	if config.IsRouteSkipped(route) {
-		metrics.RouteSkipCounter.WithLabelValues(route, req.Method, "config").Inc()
+		metrics.RouteSkipCounter.WithLabelValues("config").Inc()
 
 		// For skipped routes, just proxy to main upstream without testing
 		reqBodyBuffer := &bytes.Buffer{}
@@ -175,12 +175,12 @@ func (s *server) handle(writer http.ResponseWriter, req *http.Request) {
 		}
 
 		mainReq.Header = req.Header
-		t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues(req.Method, "main_upstream", route))
+		t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues("main_upstream"))
 		mainRes, err := mainServiceClient.Do(mainReq)
 		t.ObserveDuration()
 
 		if err != nil {
-			metrics.HTTPReqCounter.WithLabelValues("client_error", req.Method, "main_upstream", route, "skipped").Inc()
+			metrics.HTTPReqCounter.WithLabelValues("client_error", "main_upstream").Inc()
 			http.Error(writer, "Failed to reach upstream", http.StatusBadGateway)
 			return
 		}
@@ -196,7 +196,7 @@ func (s *server) handle(writer http.ResponseWriter, req *http.Request) {
 		writer.WriteHeader(mainRes.StatusCode)
 		io.Copy(writer, mainRes.Body)
 
-		metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), req.Method, "main_upstream", route, "skipped").Inc()
+		metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), "main_upstream").Inc()
 		return
 	}
 
@@ -234,16 +234,16 @@ func (s *server) handle(writer http.ResponseWriter, req *http.Request) {
 	}
 
 	mainReq.Header = req.Header
-	t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues(req.Method, "main_upstream", route))
+	t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues("main_upstream"))
 	mainRes, err := mainServiceClient.Do(mainReq)
 	t.ObserveDuration()
 	if err != nil {
-		metrics.HTTPReqCounter.WithLabelValues("client_error", req.Method, "main_upstream", route, "error").Inc()
+		metrics.HTTPReqCounter.WithLabelValues("client_error", "main_upstream").Inc()
 		logging.L.Error("error in doing the request to the main service", loggingFieldsWithError(err)...)
 		return
 	}
 
-	metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), req.Method, "main_upstream", route, "success").Inc()
+	metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), "main_upstream").Inc()
 	// TODO: Array in HTTP header values (issue #1)
 	for headerKey, headerValue := range mainRes.Header {
 		if len(headerValue) == 1 {
@@ -288,7 +288,7 @@ func (s *server) handle(writer http.ResponseWriter, req *http.Request) {
 		}
 	} else {
 		logging.L.Info("Sending request without test upstream", loggingFields(mainRes.StatusCode, mainRes.StatusCode)...)
-		metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), req.Method, "test_upstream", route, "skipped_probability").Inc()
+		metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(mainRes.StatusCode), "test_upstream").Inc()
 	}
 }
 
@@ -324,16 +324,16 @@ func (j *upstreamTestJob) Do() {
 	}
 
 	testReq.Header = j.req.Header
-	t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues(j.req.Method, "test_upstream", j.route))
+	t := prometheus.NewTimer(metrics.HTTPReqDuration.WithLabelValues("test_upstream"))
 	testRes, err := testServiceClient.Do(testReq)
 	t.ObserveDuration()
 	if err != nil {
-		metrics.HTTPReqCounter.WithLabelValues("client_error", j.req.Method, "test_upstream", j.route, "error").Inc()
+		metrics.HTTPReqCounter.WithLabelValues("client_error", "test_upstream").Inc()
 		logging.L.Error("error in doing the request to the test service", j.loggingFieldsWithError(err)...)
 		return
 	}
 
-	metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(testRes.StatusCode), j.req.Method, "test_upstream", j.route, "success").Inc()
+	metrics.HTTPReqCounter.WithLabelValues(strconv.Itoa(testRes.StatusCode), "test_upstream").Inc()
 
 	_, err = j.mainResBodyReader.Seek(0, io.SeekStart)
 	if err != nil {
@@ -357,7 +357,7 @@ func (j *upstreamTestJob) Do() {
 
 	if testRes.StatusCode != j.mainRes.StatusCode {
 		logging.L.Warn("Different status code from services", j.loggingFields(j.mainRes.StatusCode, testRes.StatusCode)...)
-		metrics.ComparisonResults.WithLabelValues(j.route, j.req.Method, "status_diff").Inc()
+		metrics.ComparisonResults.WithLabelValues("status_diff").Inc()
 
 		log := storage.Log{
 			URL:                    j.req.URL.String(),
@@ -386,7 +386,7 @@ func (j *upstreamTestJob) Do() {
 		differentHeaders := j.compareHeaders(j.mainRes.Header, testRes.Header)
 		if len(differentHeaders) > 0 {
 			logging.L.Warn("Different response headers from services", j.loggingFields(j.mainRes.StatusCode, testRes.StatusCode)...)
-			metrics.ComparisonResults.WithLabelValues(j.route, j.req.Method, "header_diff").Inc()
+			metrics.ComparisonResults.WithLabelValues("header_diff").Inc()
 
 			log := storage.Log{
 				URL:                    j.req.URL.String(),
@@ -473,10 +473,10 @@ func (j *upstreamTestJob) Do() {
 
 	if equalBody {
 		logging.L.Info("Equal body response", j.loggingFields(j.mainRes.StatusCode, testRes.StatusCode)...)
-		metrics.ComparisonResults.WithLabelValues(j.route, j.req.Method, "identical").Inc()
+		metrics.ComparisonResults.WithLabelValues("identical").Inc()
 	} else {
 		logging.L.Warn("NOT equal body response", j.loggingFields(j.mainRes.StatusCode, testRes.StatusCode)...)
-		metrics.ComparisonResults.WithLabelValues(j.route, j.req.Method, "body_diff").Inc()
+		metrics.ComparisonResults.WithLabelValues("body_diff").Inc()
 
 		l := storage.Log{
 			URL:                    j.req.URL.String(),

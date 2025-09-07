@@ -59,7 +59,7 @@ var (
 		Subsystem: "http",
 		Name:      "request_count",
 		Help:      "HTTP Request count",
-	}, []string{"status", "method", "upstream", "route", "comparison_result"})
+	}, []string{"status", "upstream"})
 
 	HTTPReqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "proksi",
@@ -67,28 +67,28 @@ var (
 		Name:      "request_duration",
 		Help:      "Duration of each request",
 		Buckets:   buckets,
-	}, []string{"method", "upstream", "route"})
+	}, []string{"upstream"})
 
 	ComparisonResults = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "proksi",
 		Subsystem: "http",
 		Name:      "comparison_results",
 		Help:      "Results of upstream response comparisons",
-	}, []string{"route", "method", "diff_type"})
+	}, []string{"diff_type"})
 
 	RouteSkipCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "proksi",
 		Subsystem: "http",
 		Name:      "route_skips",
 		Help:      "Counter for skipped routes",
-	}, []string{"route", "method", "skip_reason"})
+	}, []string{"skip_reason"})
 
 	HeaderComparisonCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "proksi",
 		Subsystem: "http",
 		Name:      "header_comparison_results",
 		Help:      "Results of header comparisons",
-	}, []string{"route", "method", "result"})
+	}, []string{"result"})
 )
 
 // InitializeHTTP initialize the metrics
