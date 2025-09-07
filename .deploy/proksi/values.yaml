@@ -131,6 +131,12 @@ routeConfigs: {}
   # "GET:/api/v1/users/*":
   #   skipHeaders: ["Authorization"]
   #   testProbability: 50
+  # "GET:/api/v1/orders/*/items":
+  #   skipHeaders: ["Order-Token"]
+  #   testProbability: 75
+  # "POST:/api/v1/users/*/posts/*":
+  #   storeReqBody: true
+  #   skipJsonPaths: ["user.id", "post.internal_id"]
 
 metrics:
   enabled: true

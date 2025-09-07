@@ -63,6 +63,8 @@ func main() {
 		logging.L.Fatal("Test upstream backend can not be empty.")
 	}
 
+	logging.L.Info("computed configs", zap.Any("config", config.ComputedConfigs))
+
 	// Initialize storage backend based on configuration
 	switch c.StorageType {
 	case "stdout":
