@@ -287,7 +287,7 @@ type Job interface {
 type upstreamTestJob struct {
 	req           *http.Request
 	route         string
-	routeConfig   config.RouteConfig
+	routeConfig   config.ComputedRouteConfig
 	reqBodyReader *bytes.Reader
 	reqBodyBuffer *bytes.Buffer
 

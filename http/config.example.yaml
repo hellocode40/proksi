@@ -66,10 +66,14 @@ skip_routes:
   - "*:/metrics"                           # Skip metrics endpoints
 
 # Per-route configuration overrides
+# Note: For boolean route-specific overrides, use semantic keywords:
+#   - "enable" to explicitly enable a feature for this route
+#   - "disable" to explicitly disable a feature for this route  
+#   - omit the field to inherit from global_config
 route_configs:
   "POST:/api/v1/cities":                   # Exact route match
-    compare_headers: false                 # Disable header comparison for this route
-    store_req_body: true                   # Store request body for debugging
+    compare_headers: disable               # Disable header comparison for this route
+    store_req_body: enable                 # Store request body for debugging
     skip_headers: ["X-Request-ID"]         # Additional headers to skip
 
   "GET:/api/v1/users/*":                   # Wildcard path matching
@@ -78,11 +82,21 @@ route_configs:
     skip_json_paths: ["timestamp", "user.last_login"]
 
   "*:/api/v2/*":                           # Method wildcard with path pattern
-    store_req_body: true                   # Store all v2 API request bodies
-    store_resp_bodies: false               # But don't store response bodies
+    store_req_body: enable                 # Store all v2 API request bodies
+    store_resp_bodies: disable             # But don't store response bodies
+
+  "GET:/api/v1/orders/*/items":            # Route parameter matching
+    skip_headers: ["Order-Token"]          # Skip order-specific headers
+    test_probability: 75                   # Test 75% of order item requests
+
+  "POST:/api/v1/users/*/posts/*":          # Multiple route parameters
+    store_req_body: enable                 # Store request bodies for user posts
+    skip_json_paths: ["user.id", "post.internal_id"]
 
 # Example of different patterns:
 # - "GET:/exact/path" - exact match for GET /exact/path
 # - "POST:/api/v1/*" - match POST requests to any path under /api/v1/
 # - "*:/health" - match any method to /health
 # - "GET:/users/[0-9]*" - match GET requests to /users/123 etc (Go path.Match syntax)
+# - "GET:/api/v1/orders/*/items" - match route with single parameter (e.g. /api/v1/orders/123/items)
+# - "POST:/api/v1/users/*/posts/*" - match route with multiple parameters (e.g. /api/v1/users/456/posts/789)
