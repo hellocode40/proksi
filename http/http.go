@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -63,7 +64,9 @@ func main() {
 		logging.L.Fatal("Test upstream backend can not be empty.")
 	}
 
-	logging.L.Info("computed configs", zap.Any("config", config.ComputedConfigs))
+	if config.ComputedConfigs != nil {
+		fmt.Printf("computed configs: %+v\n", *config.ComputedConfigs)
+	}
 
 	// Initialize storage backend based on configuration
 	switch c.StorageType {

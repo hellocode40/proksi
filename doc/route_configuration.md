@@ -36,7 +36,7 @@ global_config:
 # Routes to completely skip (no test upstream call)
 skip_routes:
   - "GET:/health"
-  - "*:/metrics"
+  - "GET:/metrics"
 
 # Per-route configuration overrides
 route_configs:
@@ -304,6 +304,8 @@ Always skip health checks, metrics, and static assets.
 skip_routes:
   - "GET:/health"
   - "GET:/metrics"
+  # TODO: there is a bug for wildcard METHOD, the *:/static..
+  # it's something related to helm configmap not config loader itself
   - "*:/static/*"
   - "OPTIONS:*"
 ```

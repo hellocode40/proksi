@@ -63,7 +63,7 @@ global_config:
 # Routes to completely skip (no test upstream call or comparison)
 skip_routes:
   - "GET:/health"                          # Skip health checks
-  - "*:/metrics"                           # Skip metrics endpoints
+  - "GET:/metrics"                           # Skip metrics endpoints
 
 # Per-route configuration overrides
 # Note: For boolean route-specific overrides, use semantic keywords:
