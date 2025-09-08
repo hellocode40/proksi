@@ -109,10 +109,11 @@ type worker struct {
 
 // RouteConfig represents per-route configuration overrides
 type RouteConfig struct {
-	CompareHeaders  string   `koanf:"compare_headers"`   // Override global compare headers setting ("" = inherit, "true"/"false" = override)
+	CompareHeaders  string   `koanf:"compare_headers"`   // Override global compare headers setting ("" = inherit, "enable"/"disable" = override)
+	CompareBody     string   `koanf:"compare_body"`      // Override global compare body setting ("" = inherit, "enable"/"disable" = override)
 	SkipHeaders     []string `koanf:"skip_headers"`      // Headers to skip during comparison
-	StoreReqBody    string   `koanf:"store_req_body"`    // Store request body on differences ("" = inherit, "true"/"false" = override)
-	StoreRespBodies string   `koanf:"store_resp_bodies"` // Store response bodies on differences ("" = inherit, "true"/"false" = override)
+	StoreReqBody    string   `koanf:"store_req_body"`    // Store request body on differences ("" = inherit, "enable"/"disable" = override)
+	StoreRespBodies string   `koanf:"store_resp_bodies"` // Store response bodies on differences ("" = inherit, "enable"/"disable" = override)
 	SkipJSONPaths   []string `koanf:"skip_json_paths"`   // Route-specific JSON paths to skip
 	TestProbability uint64   `koanf:"test_probability"`  // Override global test probability for this route (0 = inherit)
 }
@@ -120,6 +121,7 @@ type RouteConfig struct {
 // GlobalConfig represents global default configuration
 type GlobalConfig struct {
 	CompareHeaders  bool     `koanf:"compare_headers"`   // Default: true
+	CompareBody     bool     `koanf:"compare_body"`      // Default: true
 	SkipHeaders     []string `koanf:"skip_headers"`      // Global headers to skip
 	StoreReqBody    bool     `koanf:"store_req_body"`    // Default: false
 	StoreRespBodies bool     `koanf:"store_resp_bodies"` // Default: true (current LogResponsePayload)
@@ -130,6 +132,7 @@ type GlobalConfig struct {
 // ComputedRouteConfig represents a fully resolved route configuration for runtime use
 type ComputedRouteConfig struct {
 	CompareHeaders  bool     // Resolved boolean value
+	CompareBody     bool     // Resolved boolean value
 	SkipHeaders     []string // Headers to skip during comparison
 	StoreReqBody    bool     // Resolved boolean value
 	StoreRespBodies bool     // Resolved boolean value
@@ -381,6 +384,7 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 	// Pre-compute global config (with legacy migration applied)
 	computed.Global = ComputedRouteConfig{
 		CompareHeaders:  c.GlobalConfig.CompareHeaders,
+		CompareBody:     c.GlobalConfig.CompareBody,
 		SkipHeaders:     append([]string{}, c.GlobalConfig.SkipHeaders...),
 		StoreReqBody:    c.GlobalConfig.StoreReqBody,
 		StoreRespBodies: c.GlobalConfig.StoreRespBodies,
@@ -400,6 +404,7 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 		// Start with global config as base
 		mergedConfig := ComputedRouteConfig{
 			CompareHeaders:  computed.Global.CompareHeaders,
+			CompareBody:     computed.Global.CompareBody,
 			SkipHeaders:     append([]string{}, computed.Global.SkipHeaders...),
 			StoreReqBody:    computed.Global.StoreReqBody,
 			StoreRespBodies: computed.Global.StoreRespBodies,
@@ -412,6 +417,14 @@ func (c *HTTPConfig) PrecomputeRouteConfigs() *ComputedRouteConfigs {
 			mergedConfig.CompareHeaders = true
 		} else if routeConfig.CompareHeaders == "disable" {
 			mergedConfig.CompareHeaders = false
+		}
+		// Empty string means inherit from global (no override needed)
+
+		// Override with route-specific config using semantic keywords
+		if routeConfig.CompareBody == "enable" {
+			mergedConfig.CompareBody = true
+		} else if routeConfig.CompareBody == "disable" {
+			mergedConfig.CompareBody = false
 		}
 		// Empty string means inherit from global (no override needed)
 

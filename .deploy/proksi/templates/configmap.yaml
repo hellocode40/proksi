@@ -62,6 +62,7 @@ data:
     # Global configuration for all routes
     global_config:
       compare_headers: {{ .Values.globalConfig.compareHeaders }}
+      compare_body: {{ .Values.globalConfig.compareBody }}
       skip_headers:
         {{- range .Values.globalConfig.skipHeaders }}
         - {{ . }}
@@ -86,6 +87,9 @@ data:
       "{{ $route }}":
         {{- if $config.compareHeaders }}
         compare_headers: {{ $config.compareHeaders }}
+        {{- end }}
+        {{- if $config.compareBody }}
+        compare_body: {{ $config.compareBody }}
         {{- end }}
         {{- if $config.skipHeaders }}
         skip_headers:
