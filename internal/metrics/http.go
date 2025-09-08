@@ -69,6 +69,13 @@ var (
 		Name:      "header_comparison_results",
 		Help:      "Results of header comparisons",
 	}, []string{"result"})
+
+	StatusCode2xxVsNon2xxCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "proksi",
+		Subsystem: "http",
+		Name:      "status_2xx_vs_non2xx_count",
+		Help:      "Counter for cases where main upstream returns 2xx but test upstream returns non-2xx",
+	})
 )
 
 // InitializeHTTP initialize the metrics

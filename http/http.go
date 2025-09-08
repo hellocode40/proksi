@@ -359,6 +359,11 @@ func (j *upstreamTestJob) Do() {
 		logging.L.Warn("Different status code from services", j.loggingFields(j.mainRes.StatusCode, testRes.StatusCode)...)
 		metrics.ComparisonResults.WithLabelValues("status_diff").Inc()
 
+		// Track when main upstream returns 2xx but test upstream returns non-2xx
+		if isStatus2xx(j.mainRes.StatusCode) && !isStatus2xx(testRes.StatusCode) {
+			metrics.StatusCode2xxVsNon2xxCounter.Inc()
+		}
+
 		log := storage.Log{
 			URL:                    j.req.URL.String(),
 			Method:                 j.req.Method,
@@ -589,4 +594,9 @@ func (j *upstreamTestJob) compareHeaders(mainHeaders, testHeaders http.Header) [
 	}
 
 	return differentHeaders
+}
+
+// isStatus2xx returns true if the status code is in the 2xx range (200-299)
+func isStatus2xx(statusCode int) bool {
+	return statusCode >= 200 && statusCode <= 299
 }
